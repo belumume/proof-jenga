@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Proof Jenga</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Six machine-checked proofs that there are infinitely many primes. Pull an idea out from under them and see which proofs still stand.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+/* Layout: a slate blackboard. The tower of ideas (left) holds up six proofs (right);
+   reading sections follow in one narrow column. Deliberately single-theme: chalk on slate. */
+:root {
+  --board: #1e2b27;
+  --board-deep: #17221e;
+  --board-line: #31423c;
+  --chalk: #ebe7da;
+  --chalk-dim: #a7b2a6;
+  --chalk-faint: #6f7d74;
+  --yellow: #f1d06e;
+  --pink: #ee9c94;
+  --blue: #9ccbe6;
+  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-hand: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+  --step--1: 0.84rem;
+  --step-0: 1rem;
+  --step-1: 1.2rem;
+  --step-2: 1.6rem;
+  --step-3: clamp(2.6rem, 7vw, 4.4rem);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--board-deep); }
+body {
+  margin: 0;
+  background: var(--board);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(235, 231, 218, 0.05), transparent 55%),
+    radial-gradient(ellipse at 90% 60%, rgba(235, 231, 218, 0.035), transparent 50%);
+  color: var(--chalk);
+  font: 400 var(--step-0)/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+a { color: var(--blue); text-underline-offset: 3px; }
+a:hover { color: var(--chalk); }
+:focus-visible { outline: 2px dashed var(--yellow); outline-offset: 3px; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+.read { max-width: 66ch; }
+h1, h2 { font-family: var(--font-display); font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: var(--step-3); line-height: 1; letter-spacing: -0.01em; }
+h2 { font-size: var(--step-2); line-height: 1.15; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+.hand { font-family: var(--font-hand); font-weight: 500; color: var(--yellow); }
+.label { font-size: var(--step--1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--chalk-dim); }
+
+/* header */
+header { padding-block: 48px 28px; display: grid; gap: 14px; }
+header .kicker { font-family: var(--font-hand); font-size: 1.5rem; color: var(--yellow); }
+header .lede { font-size: var(--step-1); color: var(--chalk-dim); max-width: 60ch; }
+header .lede strong { color: var(--chalk); font-weight: 500; }
+
+/* the game */
+.game {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 28px;
+  border-top: 1px solid var(--board-line);
+  border-bottom: 1px solid var(--board-line);
+  padding-block: 28px;
+}
+@media (max-width: 820px) { .game { grid-template-columns: minmax(0, 1fr); } }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 14px; }
+.panel-head h2 { font-size: var(--step-1); font-family: var(--font-body); font-weight: 600; }
+.hint { color: var(--chalk-dim); font-size: var(--step--1); }
+
+.tower { display: flex; flex-direction: column; gap: 6px; }
+.block {
+  --shift: 0px;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% - 34px);
+  text-align: left;
+  padding: 9px 12px;
+  color: var(--chalk);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  background:
+    repeating-linear-gradient(115deg, rgba(235, 231, 218, 0.07) 0 2px, transparent 2px 9px),
+    rgba(235, 231, 218, 0.04);
+  border: 1.5px solid rgba(235, 231, 218, 0.55);
+  border-radius: 3px 5px 4px 3px;
+  cursor: pointer;
+  transform: translateX(var(--shift));
+  transition: transform 260ms cubic-bezier(.2, .8, .2, 1), opacity 200ms, border-color 200ms;
+}
+.block:nth-child(odd) { border-radius: 5px 3px 3px 4px; }
+.block:hover { border-color: var(--chalk); }
+.block .count { font-family: var(--font-mono); font-size: 0.78rem; color: var(--chalk-dim); font-variant-numeric: tabular-nums; }
+.block .sub { display: block; font-size: 0.78rem; color: var(--chalk-dim); }
+.block[aria-pressed="true"] {
+  --shift: 34px;
+  border-style: dashed;
+  border-color: var(--yellow);
+  background: transparent;
+  color: var(--yellow);
+}
+.block[aria-pressed="true"] .sub, .block[aria-pressed="true"] .count { color: var(--yellow); opacity: 0.8; }
+.block.axiom { border-color: rgba(156, 203, 230, 0.7); }
+.block.lit { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow) inset; }
+.ground { height: 0; border-top: 3px double rgba(235, 231, 218, 0.4); margin-top: 6px; }
+.ground-label { font-family: var(--font-hand); color: var(--chalk-faint); font-size: 1.1rem; margin-top: 2px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.chip {
+  font: inherit;
+  font-size: var(--step--1);
+  color: var(--chalk);
+  background: transparent;
+  border: 1px solid var(--board-line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--chalk-dim); }
+.chip.reset { color: var(--chalk-dim); }
+
+.score { font-family: var(--font-hand); font-size: 1.7rem; color: var(--yellow); line-height: 1; }
+
+.proofs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 560px) { .proofs { grid-template-columns: minmax(0, 1fr); } }
+.proof {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--board-line);
+  border-radius: 6px;
+  background: rgba(23, 34, 30, 0.6);
+  transform-origin: 20% 100%;
+  transition: transform 420ms cubic-bezier(.3, 1.4, .5, 1), opacity 300ms, border-color 200ms;
+  min-width: 0;
+}
+.proof .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.proof h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.45rem; line-height: 1.1; }
+.proof .year { font-family: var(--font-mono); font-size: 0.76rem; color: var(--chalk-dim); white-space: nowrap; }
+.proof .idea { font-size: 0.9rem; color: var(--chalk-dim); }
+.proof .badge { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--yellow); }
+.size { display: grid; gap: 4px; }
+.size .bar { height: 6px; background: var(--board-line); border-radius: 3px; overflow: hidden; }
+.size .bar i { display: block; height: 100%; background: var(--chalk-dim); border-radius: 3px; }
+.size .num { font-size: 0.78rem; color: var(--chalk-dim); font-variant-numeric: tabular-nums; }
+.status { font-size: 0.86rem; min-height: 1.4em; }
+.status .ok { color: var(--chalk-dim); }
+.proof.fallen { transform: rotate(-5deg) translateY(6px); opacity: 0.55; border-color: rgba(238, 156, 148, 0.55); }
+.proof.fallen h3 { text-decoration: line-through; text-decoration-color: var(--pink); text-decoration-thickness: 2px; }
+.proof.fallen .status { color: var(--pink); }
+.proof details { font-size: 0.82rem; }
+.proof summary { cursor: pointer; color: var(--blue); }
+.chain { list-style: none; margin: 8px 0 0; padding: 0 0 0 10px; border-left: 1px dashed var(--chalk-faint); display: grid; gap: 2px; }
+.chain li { font-family: var(--font-mono); font-size: 0.74rem; color: var(--chalk-dim); overflow-wrap: anywhere; }
+.chain li:last-child { color: var(--pink); }
+.chain li::before { content: "↳ "; color: var(--chalk-faint); }
+.chain li:first-child::before { content: ""; }
+pre.lean {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  background: var(--board-deep);
+  border: 1px solid var(--board-line);
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--chalk);
+  white-space: pre;
+}
+
+/* reading sections */
+section { padding-block: 44px 0; display: grid; gap: 16px; }
+.findings { list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; counter-reset: f; }
+.findings li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; }
+.findings li::before {
+  counter-increment: f;
+  content: counter(f);
+  grid-row: span 2;
+  font-family: var(--font-hand);
+  font-size: 1.9rem;
+  line-height: 1;
+  color: var(--yellow);
+  width: 1.2ch;
+}
+.findings b { font-weight: 600; }
+.findings p { color: var(--chalk-dim); }
+.findings p b { color: var(--chalk); font-weight: 500; }
+blockquote {
+  margin: 0;
+  padding: 2px 0 2px 16px;
+  border-left: 2px solid var(--yellow);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1.35;
+  color: var(--chalk);
+}
+blockquote cite { display: block; margin-top: 6px; font-family: var(--font-body); font-style: normal; font-size: var(--step--1); color: var(--chalk-dim); }
+.read p + p { margin-top: 12px; }
+.read p { color: var(--chalk-dim); }
+.read p strong { color: var(--chalk); font-weight: 500; }
+.steps { margin: 0; padding-left: 1.3em; color: var(--chalk-dim); display: grid; gap: 6px; }
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--board-line); color: var(--chalk-faint); font-size: var(--step--1); display: grid; gap: 8px; }
+footer p { max-width: 80ch; }
+
+/* phones: the proofs sit below the tower, so keep the score in view while pulling */
+.dock { display: none; }
+@media (max-width: 820px) {
+  .block { padding: 7px 10px; }
+  .block .sub { display: none; }
+  .dock {
+    display: flex;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 5;
+    gap: 6px 12px;
+    flex-wrap: wrap;
+    align-items: baseline;
+    padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    background: var(--board-deep);
+    border-top: 1px solid var(--board-line);
+    font-size: var(--step--1);
+    color: var(--chalk-dim);
+  }
+  .dock .score { font-size: 1.35rem; }
+  .dock a { margin-left: auto; }
+  body { padding-bottom: 96px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .block, .proof { transition: none; }
+  .proof.fallen { transform: none; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="kicker">a game for “Math 2.0”</span>
+    <h1>Proof Jenga</h1>
+    <p class="lede">Here are <strong>six proofs that there are infinitely many primes</strong>, each one checked by the Lean proof assistant. They stand on a tower of ideas from Lean's math library, Mathlib. <strong>Pull an idea out</strong> and watch which proofs fall.</p>
+  </header>
+
+  <div class="game" id="game">
+    <div>
+      <div class="panel-head">
+        <h2>The tower</h2>
+        <span class="hint">Tap a block to pull it out</span>
+      </div>
+      <div class="tower" id="tower" role="group" aria-label="Ideas the proofs stand on"></div>
+      <div class="ground"></div>
+      <div class="ground-label">logic</div>
+      <div class="controls" id="presets"></div>
+    </div>
+    <div>
+      <div class="panel-head" id="proofs-head">
+        <h2>The proofs</h2>
+        <span class="score" id="score" aria-live="polite"></span>
+      </div>
+      <div class="proofs" id="proofs"></div>
+    </div>
+  </div>
+
+  <div class="dock" id="dock" aria-hidden="true"><span class="score" data-dock-score></span><span data-dock-fallen></span><a href="#proofs-head">See proofs</a></div>
+
+  <section aria-labelledby="h-found">
+    <h2 id="h-found">What the tower shows</h2>
+    <ol class="findings read" id="findings"></ol>
+  </section>
+
+  <section aria-labelledby="h-why" class="read">
+    <h2 id="h-why">Why play this</h2>
+    <p>In October 2026 Terence Tao gave a public lecture at Caltech called <a href="https://teorth.github.io/tao-web/slides/math-2-0-caltech-2026.pdf">“Math 2.0”</a>. His argument is that AI has made proofs cheap. Mathematics used to run on <strong>proof scarcity</strong>, and now it has proof abundance. When proofs are cheap, a solved problem is no longer the prize. What matters is <strong>understanding</strong>: why a proof works, what it really needs, and what else it could prove.</p>
+    <p>One of the experiments he suggested is exactly this game. A student of his took a proof, blocked one of the results it used, and asked for a new proof. Then two results. Then a weaker model.</p>
+    <blockquote>“Now that proofs are cheap, we don’t need to stop at one proof of theorem. We can have many.”<cite>Terence Tao, Math 2.0, AIM Public Lecture, Caltech, 9 Oct 2026, at 44:00 (auto-captions)</cite></blockquote>
+    <p>Proof Jenga does the bookkeeping half of that experiment for one of the oldest theorems there is. Each proof's dependencies are not hand-labelled. They are read out of the proof terms Lean actually checked, so when a proof falls, it really did use that block, and the chain of lemmas that shows why is one tap away.</p>
+    <blockquote>“The primary bottleneck to achieving ‘Math 2.0’ is not technology, or even institutional culture. It is imagination.”<cite>Terence Tao, Math 2.0 slides, slide 29</cite></blockquote>
+  </section>
+
+  <section aria-labelledby="h-how" class="read">
+    <h2 id="h-how">How it works, and what it can't tell you</h2>
+    <p><strong>What “uses” means.</strong> For each proof, a short Lean program walks the checked proof term and collects every definition and lemma it mentions, then every one <em>those</em> mention, all the way down. A proof falls when the block you pulled is anywhere in that collection. The tower is a hand-picked list of named Mathlib declarations, chosen to stand for recognisable ideas.</p>
+    <p><strong>“Uses” is not “needs”.</strong> A proof falls if the library's version of it happens to touch a block, even when the mathematics doesn't need it. That gap is the interesting part. Finding 2 above is an example: the gap was real, so we closed it with a rebuilt proof. A fallen proof here means “this route, as written, goes through that idea”, not “no route exists”.</p>
+    <p><strong>Versions.</strong> Lean 4.35.0 and Mathlib v4.35.0. The counts change as Mathlib changes, and the build recomputes them.</p>
+  </section>
+
+  <section aria-labelledby="h-add" class="read">
+    <h2 id="h-add">Add a proof</h2>
+    <p>The tower gets more interesting with every route that avoids a block. Two open challenges:</p>
+    <ol class="steps">
+      <li><strong>Dirichlet without Euclid.</strong> Dirichlet's theorem falls with Euclid through the same smooth-numbers lemma, further down. Proving that lemma's forward direction on its own inside Mathlib would make both the Mathlib Erdős proof and Dirichlet stand. We checked that no other route connects them to Euclid.</li>
+      <li><strong>Any proof without the axiom of choice.</strong> Euclid's argument is constructive, but every proof here reaches the axiom through some library lemma.</li>
+    </ol>
+    <p>The proofs live in <code>jenga/Jenga/Proofs/</code>. Each file proves the same statement. Add one, list it in <code>scripts/Deps.lean</code> and <code>scripts/build_site.py</code>, rebuild, and the page updates.</p>
+  </section>
+
+  <footer>
+    <p>Built after Terence Tao's lecture “Math 2.0” (<a href="https://teorth.github.io/tao-web/slides/math-2-0-caltech-2026.pdf">slides</a>, <a href="https://vimeo.com/1236268702">video</a>, <a href="https://terrytao.wordpress.com/2026/10/10/math-2-0/">blog post</a>). Quotes from the talk come from Vimeo's auto-generated captions. This page is not affiliated with Tao, Caltech or AIM.</p>
+    <p>The proofs use <a href="https://github.com/leanprover-community/mathlib4">Mathlib</a> (Apache 2.0). The rebuilt Erdős proof adapts Michael Stoll's Mathlib formalization of the argument from <i>Proofs from THE BOOK</i>. Written with AI assistance. Every proof is machine-checked, and every count on this page is generated from the checked proofs.</p>
+  </footer>
+</div>
+
+<script>
+const DATA = {"blocks": ["Nat.exists_infinite_primes", "Nat.minFac_prime", "Nat.factorial", "Nat.coprime_fermatNumber_fermatNumber", "Nat.centralBinom", "Nat.exists_prime_lt_and_le_two_mul", "Nat.smoothNumbers", "Real", "Real.log", "Complex", "Summable", "ZMod", "DirichletCharacter", "LSeries", "Classical.choice"], "proofs": [{"proof": "Jenga.euclid", "closureSize": 3231, "blocks": ["Nat.minFac_prime", "Nat.factorial", "Classical.choice"], "axioms": ["propext", "Classical.choice", "Quot.sound"], "why": {"Nat.minFac_prime": ["Jenga.euclid", "Nat.minFac_prime"], "Nat.factorial": ["Jenga.euclid", "Nat.factorial"], "Classical.choice": ["Jenga.euclid", "Nat.minFac_dvd", "_private.Mathlib.Data.Nat.Prime.Defs.0.Nat.minFac_has_prop", "Nat.add_eq_right._simp_1", "Nat.add_eq_right", "_private.Init.Data.Nat.Lemmas.0.Nat.add_eq_right._proof_1_1", "Classical.propDecidable", "Classical.choice"]}}, {"proof": "Jenga.fermat", "closureSize": 6404, "blocks": ["Nat.minFac_prime", "Nat.coprime_fermatNumber_fermatNumber", "Classical.choice"], "axioms": ["propext", "Classical.choice", "Quot.sound"], "why": {"Nat.minFac_prime": ["Jenga.fermat", "Nat.minFac_prime"], "Nat.coprime_fermatNumber_fermatNumber": ["Jenga.fermat", "Nat.coprime_fermatNumber_fermatNumber"], "Classical.choice": ["Jenga.fermat", "Nat.coprime_fermatNumber_fermatNumber", "Classical.byCases", "Classical.propDecidable", "Classical.choice"]}}, {"proof": "Jenga.bertrand", "closureSize": 31226, "blocks": ["Nat.minFac_prime", "Nat.factorial", "Nat.centralBinom", "Nat.exists_prime_lt_and_le_two_mul", "Real", "Real.log", "Complex", "Summable", "Classical.choice"], "axioms": ["propext", "Classical.choice", "Quot.sound"], "why": {"Nat.minFac_prime": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul", "Mathlib.Meta.NormNum.minFacHelper_2", "Nat.minFac_prime"], "Nat.factorial": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul", "Nat.exists_prime_lt_and_le_two_mul_eventually", "bertrand_main_inequality", "Bertrand.real_main_inequality", "Real.log_mul", "Real.exp_add", "Complex.exp_add", "Nat.factorial"], "Nat.centralBinom": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul", "Nat.exists_prime_lt_and_le_two_mul_eventually", "Nat.centralBinom"], "Nat.exists_prime_lt_and_le_two_mul": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul"], "Real": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul", "Nat.exists_prime_lt_and_le_two_mul_eventually", "bertrand_main_inequality", "Real"], "Real.log": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul", "Nat.exists_prime_lt_and_le_two_mul_eventually", "bertrand_main_inequality", "Bertrand.real_main_inequality", "Real.log"], "Complex": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul", "Nat.exists_prime_lt_and_le_two_mul_eventually", "bertrand_main_inequality", "Bertrand.real_main_inequality", "Real.rpow_mul", "Complex"], "Summable": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul", "Nat.exists_prime_lt_and_le_two_mul_eventually", "bertrand_main_inequality", "Bertrand.real_main_inequality", "strictConcaveOn_sqrt_mul_log_Ioi", "deriv2_sqrt_mul_log", "Real.hasDerivAt_sqrt", "Real.hasStrictDerivAt_sqrt", "Real.deriv_sqrt_aux", "OpenPartialHomeomorph.contDiffAt_symm_deriv", "OpenPartialHomeomorph.contDiffAt_symm", "contDiffAt_map_inverse", "instHasSummableGeomSeriesOfCompleteSpace", "Summable"], "Classical.choice": ["Jenga.bertrand", "Nat.exists_prime_lt_and_le_two_mul", "Nat.exists_prime_lt_and_le_two_mul_eventually", "bertrand_main_inequality", "Real.linearOrder", "Classical.propDecidable", "Classical.choice"]}}, {"proof": "Jenga.erdos", "closureSize": 15812, "blocks": ["Nat.exists_infinite_primes", "Nat.minFac_prime", "Nat.factorial", "Nat.smoothNumbers", "Real", "Summable", "Classical.choice"], "axioms": ["propext", "Classical.choice", "Quot.sound"], "why": {"Nat.exists_infinite_primes": ["Jenga.erdos", "not_summable_one_div_on_primes", "one_half_le_sum_primes_ge_one_div", "Nat.smoothNumbersUpTo_card_le", "Nat.smoothNumbersUpTo_subset_image", "Nat.eq_prod_primes_mul_sq_of_mem_smoothNumbers", "Nat.mem_smoothNumbers'", "_private.Mathlib.NumberTheory.SmoothNumbers.0.Nat.mem_smoothNumbers'._simp_1_1", "Nat.mem_factoredNumbers'", "Nat.exists_infinite_primes"], "Nat.minFac_prime": ["Jenga.erdos", "not_summable_one_div_on_primes", "one_half_le_sum_primes_ge_one_div", "Nat.roughNumbersUpTo", "Nat.smoothNumbers", "Nat.primeFactorsList", "Nat.primeFactorsList._proof_1", "Nat.factors_lemma", "Nat.minFac_prime"], "Nat.factorial": ["Jenga.erdos", "not_summable_one_div_on_primes", "one_half_le_sum_primes_ge_one_div", "Nat.smoothNumbersUpTo_card_le", "Nat.smoothNumbersUpTo_subset_image", "Nat.eq_prod_primes_mul_sq_of_mem_smoothNumbers", "Nat.mem_smoothNumbers'", "_private.Mathlib.NumberTheory.SmoothNumbers.0.Nat.mem_smoothNumbers'._simp_1_1", "Nat.mem_factoredNumbers'", "Nat.exists_infinite_primes", "Nat.factorial"], "Nat.smoothNumbers": ["Jenga.erdos", "not_summable_one_div_on_primes", "one_half_le_sum_primes_ge_one_div", "Nat.roughNumbersUpTo", "Nat.smoothNumbers"], "Real": ["Jenga.erdos", "Real"], "Summable": ["Jenga.erdos", "not_summable_one_div_on_primes", "Summable"], "Classical.choice": ["Jenga.erdos", "Classical.byContradiction", "Classical.propDecidable", "Classical.choice"]}}, {"proof": "Jenga.erdosRebuilt", "closureSize": 16076, "blocks": ["Nat.minFac_prime", "Nat.smoothNumbers", "Real", "Summable", "Classical.choice"], "axioms": ["propext", "Classical.choice", "Quot.sound"], "why": {"Nat.minFac_prime": ["Jenga.erdosRebuilt", "Jenga.Rebuilt.not_summable_one_div_on_primes", "Jenga.Rebuilt.one_half_le_sum_primes_ge_one_div", "Nat.roughNumbersUpTo", "Nat.smoothNumbers", "Nat.primeFactorsList", "Nat.primeFactorsList._proof_1", "Nat.factors_lemma", "Nat.minFac_prime"], "Nat.smoothNumbers": ["Jenga.erdosRebuilt", "Jenga.Rebuilt.not_summable_one_div_on_primes", "Jenga.Rebuilt.one_half_le_sum_primes_ge_one_div", "Nat.roughNumbersUpTo", "Nat.smoothNumbers"], "Real": ["Jenga.erdosRebuilt", "Real"], "Summable": ["Jenga.erdosRebuilt", "summable_of_hasFiniteSupport", "Summable"], "Classical.choice": ["Jenga.erdosRebuilt", "Classical.byContradiction", "Classical.propDecidable", "Classical.choice"]}}, {"proof": "Jenga.dirichlet", "closureSize": 67435, "blocks": ["Nat.exists_infinite_primes", "Nat.minFac_prime", "Nat.factorial", "Nat.smoothNumbers", "Real", "Real.log", "Complex", "Summable", "ZMod", "DirichletCharacter", "LSeries", "Classical.choice"], "axioms": ["propext", "Classical.choice", "Quot.sound"], "why": {"Nat.exists_infinite_primes": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "ArithmeticFunction.vonMangoldt.not_summable_residueClass_prime_div", "ArithmeticFunction.vonMangoldt.summable_residueClass_non_primes_div", "_private.Mathlib.NumberTheory.LSeries.PrimesInAP.0.ArithmeticFunction.vonMangoldt.summable_F''", "Nat.Primes.summable_rpow", "Nat.Primes.not_summable_one_div", "not_summable_one_div_on_primes", "one_half_le_sum_primes_ge_one_div", "Nat.smoothNumbersUpTo_card_le", "Nat.smoothNumbersUpTo_subset_image", "Nat.eq_prod_primes_mul_sq_of_mem_smoothNumbers", "Nat.mem_smoothNumbers'", "_private.Mathlib.NumberTheory.SmoothNumbers.0.Nat.mem_smoothNumbers'._simp_1_1", "Nat.mem_factoredNumbers'", "Nat.exists_infinite_primes"], "Nat.minFac_prime": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "ArithmeticFunction.vonMangoldt.support_residueClass_prime_div", "ArithmeticFunction.vonMangoldt_ne_zero_iff", "Nat.minFac_prime"], "Nat.factorial": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "ArithmeticFunction.vonMangoldt.not_summable_residueClass_prime_div", "LSeries.summable_real_of_abscissaOfAbsConv_lt", "Complex.ofReal_cpow", "Complex.ofReal_exp", "Complex.ofReal_exp_ofReal_re", "Complex.exp_conj", "Nat.factorial"], "Nat.smoothNumbers": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "ArithmeticFunction.vonMangoldt.not_summable_residueClass_prime_div", "ArithmeticFunction.vonMangoldt.summable_residueClass_non_primes_div", "_private.Mathlib.NumberTheory.LSeries.PrimesInAP.0.ArithmeticFunction.vonMangoldt.summable_F''", "Nat.Primes.summable_rpow", "Nat.Primes.not_summable_one_div", "not_summable_one_div_on_primes", "one_half_le_sum_primes_ge_one_div", "Nat.roughNumbersUpTo", "Nat.smoothNumbers"], "Real": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "Real"], "Real.log": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "ArithmeticFunction.vonMangoldt.not_summable_residueClass_prime_div", "Real.rpow_le_rpow_of_exponent_le", "Real.log"], "Complex": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "ArithmeticFunction.vonMangoldt.not_summable_residueClass_prime_div", "Complex.ofReal", "Complex"], "Summable": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "summable_of_hasFiniteSupport", "Summable"], "ZMod": ["Jenga.dirichlet", "ZMod"], "DirichletCharacter": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "ArithmeticFunction.vonMangoldt.not_summable_residueClass_prime_div", "ArithmeticFunction.vonMangoldt.LSeries_residueClass_lower_bound", "ArithmeticFunction.vonMangoldt.LFunctionResidueClassAux", "DirichletCharacter"], "LSeries": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "ArithmeticFunction.vonMangoldt.not_summable_residueClass_prime_div", "ArithmeticFunction.vonMangoldt.LSeries_residueClass_lower_bound", "LSeries"], "Classical.choice": ["Jenga.dirichlet", "Nat.infinite_setOfPred_prime_and_eq_mod", "Classical.byContradiction", "Classical.propDecidable", "Classical.choice"]}}], "sources": {"Jenga.euclid": {"file": "Jenga/Proofs/Euclid.lean", "code": "theorem euclid : InfinitelyManyPrimes := by\n  intro n\n  -- `n! + 1 ≠ 1` because `n! > 0`, so its smallest factor is a prime.\n  have hne : n.factorial + 1 ≠ 1 := by\n    have := Nat.factorial_pos n\n    omega\n  refine ⟨(n.factorial + 1).minFac, ?_, Nat.minFac_prime hne⟩\n  by_contra hlt\n  push Not at hlt\n  have hp : (n.factorial + 1).minFac.Prime := Nat.minFac_prime hne\n  -- `p ≤ n`, so `p ∣ n!`; also `p ∣ n! + 1`; hence `p ∣ 1`.\n  have h1 : (n.factorial + 1).minFac ∣ n.factorial :=\n    Nat.dvd_factorial hp.pos hlt.le\n  have h2 : (n.factorial + 1).minFac ∣ 1 :=\n    (Nat.dvd_add_right h1).mp (Nat.minFac_dvd _)\n  exact hp.one_lt.ne' (Nat.dvd_one.mp h2)\n"}, "Jenga.fermat": {"file": "Jenga/Proofs/Fermat.lean", "code": "theorem fermat : InfinitelyManyPrimes := by\n  intro n\n  -- the smallest prime factor of the k-th Fermat number\n  let f : ℕ → ℕ := fun k => (Nat.fermatNumber k).minFac\n  have hprime : ∀ k, (f k).Prime := fun k =>\n    Nat.minFac_prime (Nat.fermatNumber_ne_one k)\n  -- different Fermat numbers give different primes, because they are coprime\n  have hinj : Function.Injective f := by\n    intro i j hij\n    by_contra hne\n    have hcop := Nat.coprime_fermatNumber_fermatNumber hne\n    have hi : f i ∣ Nat.fermatNumber i := Nat.minFac_dvd _\n    have hj : f i ∣ Nat.fermatNumber j := hij ▸ Nat.minFac_dvd _\n    exact (hprime i).one_lt.ne' (Nat.eq_one_of_dvd_coprimes hcop hi hj)\n  -- infinitely many distinct primes, so one of them is past `n`\n  obtain ⟨p, ⟨k, rfl⟩, hp⟩ := (Set.infinite_range_of_injective hinj).exists_gt n\n  exact ⟨f k, hp.le, hprime k⟩\n"}, "Jenga.bertrand": {"file": "Jenga/Proofs/Bertrand.lean", "code": "theorem bertrand : InfinitelyManyPrimes := by\n  intro n\n  rcases Nat.eq_zero_or_pos n with rfl | hn\n  · exact ⟨2, Nat.zero_le _, Nat.prime_two⟩\n  · obtain ⟨p, hp, hlt, -⟩ := Nat.exists_prime_lt_and_le_two_mul n hn.ne'\n    exact ⟨p, hlt.le, hp⟩\n"}, "Jenga.erdos": {"file": "Jenga/Proofs/Erdos.lean", "code": "theorem erdos : InfinitelyManyPrimes := by\n  intro n\n  by_contra h\n  push Not at h\n  -- every prime is below `n`, so the terms `1/p` are zero from `n` on …\n  have hfin : Set.Finite (Function.support\n      (Set.indicator {p | p.Prime} (fun k : ℕ ↦ (1 : ℝ) / k))) := by\n    refine (Set.finite_Iio n).subset fun k hk => ?_\n    have hk' : k.Prime := by\n      by_contra hnot\n      exact hk (Set.indicator_of_notMem hnot _)\n    by_contra hge\n    exact h k (not_lt.mp hge) hk'\n  -- … so the sum is finite, contradicting divergence\n  exact not_summable_one_div_on_primes (summable_of_hasFiniteSupport hfin)\n"}, "Jenga.erdosRebuilt": {"file": "Jenga/Proofs/ErdosRebuilt.lean", "code": "theorem erdosRebuilt : InfinitelyManyPrimes := by\n  intro n\n  by_contra h\n  push Not at h\n  have hfin : Set.Finite (Function.support\n      (Set.indicator {p | p.Prime} (fun k : ℕ ↦ (1 : ℝ) / k))) := by\n    refine (Set.finite_Iio n).subset fun k hk => ?_\n    have hk' : k.Prime := by\n      by_contra hnot\n      exact hk (Set.indicator_of_notMem hnot _)\n    by_contra hge\n    exact h k (not_lt.mp hge) hk'\n  exact Rebuilt.not_summable_one_div_on_primes (summable_of_hasFiniteSupport hfin)\n"}, "Jenga.dirichlet": {"file": "Jenga/Proofs/Dirichlet.lean", "code": "theorem dirichlet : InfinitelyManyPrimes := by\n  intro n\n  have h := Nat.infinite_setOfPred_prime_and_eq_mod (q := 1) (a := 0) (isUnit_of_subsingleton _)\n  obtain ⟨p, hp, hlt⟩ := h.exists_gt n\n  exact ⟨p, hlt.le, hp.1⟩\n"}}};
+
+// Tower order, top to bottom. `sub` is what a reader sees under the block name.
+const BLOCKS = [
+  { id: "LSeries", name: "L-series", sub: "Dirichlet's analytic machinery" },
+  { id: "DirichletCharacter", name: "Dirichlet characters", sub: "functions that detect residues" },
+  { id: "Nat.exists_prime_lt_and_le_two_mul", name: "Bertrand's postulate", sub: "a prime between n and 2n" },
+  { id: "Nat.exists_infinite_primes", name: "Euclid's theorem itself", sub: "Mathlib's own proof of it" },
+  { id: "Nat.centralBinom", name: "Central binomial coefficients", sub: "the numbers C(2n, n)" },
+  { id: "Nat.coprime_fermatNumber_fermatNumber", name: "Fermat numbers are coprime", sub: "no prime divides two of them" },
+  { id: "Nat.smoothNumbers", name: "Smooth numbers", sub: "all prime factors small" },
+  { id: "Complex", name: "Complex numbers", sub: "" },
+  { id: "Real.log", name: "Logarithms", sub: "" },
+  { id: "Summable", name: "Infinite series", sub: "sums that converge" },
+  { id: "Real", name: "Real numbers", sub: "" },
+  { id: "ZMod", name: "Modular arithmetic", sub: "arithmetic mod q" },
+  { id: "Nat.factorial", name: "Factorials", sub: "n! = 1 · 2 · … · n" },
+  { id: "Nat.minFac_prime", name: "Prime factors exist", sub: "every n > 1 has one" },
+  { id: "Classical.choice", name: "Axiom of choice", sub: "an axiom, not a theorem", axiom: true },
+];
+
+const PROOFS = {
+  "Jenga.euclid": { name: "Euclid", year: "c. 300 BC", idea: "Multiply 1 · 2 · … · n and add one. Its prime factors are all bigger than n." },
+  "Jenga.fermat": { name: "Goldbach", year: "1730", idea: "Fermat numbers 3, 5, 17, 257, … share no prime factors, so each brings a new prime." },
+  "Jenga.bertrand": { name: "Bertrand", year: "1845 / 1852", idea: "There is always a prime between n and 2n. Far more than we need." },
+  "Jenga.erdos": { name: "Euler–Erdős", year: "1737 / 1938", idea: "1/2 + 1/3 + 1/5 + 1/7 + … diverges. Finitely many primes would give a finite sum." },
+  "Jenga.erdosRebuilt": { name: "Erdős, rebuilt", year: "this page", idea: "The same argument, re-proved so it no longer touches Euclid's theorem.", badge: "rebuilt here" },
+  "Jenga.dirichlet": { name: "Dirichlet", year: "1837", idea: "Every progression a, a+q, a+2q, … with gcd(a, q) = 1 has infinitely many primes. Take q = 1." },
+};
+
+const PRESETS = [
+  { label: "Pull Euclid's theorem", pull: ["Nat.exists_infinite_primes"] },
+  { label: "Pull factorials", pull: ["Nat.factorial"] },
+  { label: "Pull the real numbers", pull: ["Real"] },
+  { label: "Pull the axiom of choice", pull: ["Classical.choice"] },
+];
+
+const byProof = Object.fromEntries(DATA.proofs.map((p) => [p.proof, p]));
+const order = DATA.proofs.map((p) => p.proof);
+const pulled = new Set();
+const fmt = (n) => n.toLocaleString("en-US");
+const tidy = (name) => name.replace(/^_private\.[^.]+(\.[^.]+)*?\.0\./, "").replace(/\._proof_\d+(_\d+)?$/, " (proof)").replace(/\._simp_\d+(_\d+)?$/, " (simp lemma)");
+const blockName = (id) => BLOCKS.find((b) => b.id === id)?.name ?? id;
+const users = (id) => order.filter((p) => byProof[p].blocks.includes(id));
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else e.setAttribute(k, v);
+  }
+  for (const kid of kids) if (kid != null) e.append(kid);
+  return e;
+}
+
+function renderTower() {
+  const tower = document.getElementById("tower");
+  for (const b of BLOCKS) {
+    const n = users(b.id).length;
+    const btn = el("button", {
+      class: "block" + (b.axiom ? " axiom" : ""),
+      type: "button",
+      id: "block-" + b.id.replace(/\W/g, "-"),
+      "aria-pressed": "false",
+      "data-id": b.id,
+      title: b.id,
+    },
+      el("span", {}, b.name, b.sub ? el("span", { class: "sub", text: b.sub }) : null),
+      el("span", { class: "count", text: `${n} of ${order.length}` }),
+    );
+    btn.addEventListener("click", () => toggle(b.id));
+    btn.addEventListener("mouseenter", () => lightProofs(b.id, true));
+    btn.addEventListener("mouseleave", () => lightProofs(b.id, false));
+    tower.append(btn);
+  }
+  const presets = document.getElementById("presets");
+  for (const p of PRESETS) {
+    const c = el("button", { class: "chip", type: "button", text: p.label });
+    c.addEventListener("click", () => { pulled.clear(); p.pull.forEach((id) => pulled.add(id)); update(); });
+    presets.append(c);
+  }
+  const reset = el("button", { class: "chip reset", type: "button", text: "Put every block back" });
+  reset.addEventListener("click", () => { pulled.clear(); update(); });
+  presets.append(reset);
+}
+
+function lightProofs(id, on) {
+  for (const p of order) {
+    const card = document.getElementById("proof-" + p);
+    card.style.borderColor = on && byProof[p].blocks.includes(id) ? "var(--yellow)" : "";
+  }
+}
+
+function renderProofs() {
+  const box = document.getElementById("proofs");
+  const max = Math.max(...DATA.proofs.map((p) => p.closureSize));
+  for (const id of order) {
+    const p = byProof[id], meta = PROOFS[id], src = DATA.sources[id];
+    const card = el("article", { class: "proof", id: "proof-" + id, "aria-label": meta.name },
+      el("div", { class: "top" }, el("h3", { text: meta.name }), el("span", { class: "year", text: meta.year })),
+      meta.badge ? el("span", { class: "badge", text: meta.badge }) : null,
+      el("p", { class: "idea", text: meta.idea }),
+      el("div", { class: "size" },
+        el("div", { class: "bar" }, el("i", { style: `width:${Math.max(2, (100 * p.closureSize) / max)}%` })),
+        el("span", { class: "num", text: `stands on ${fmt(p.closureSize)} definitions and lemmas` })),
+      el("div", { class: "status", "data-status": "" }),
+      el("details", {}, el("summary", { text: "See the Lean proof" }),
+        el("pre", { class: "lean", text: src.code })),
+    );
+    card.addEventListener("mouseenter", () => { for (const b of p.blocks) document.querySelector(`[data-id="${CSS.escape(b)}"]`)?.classList.add("lit"); });
+    card.addEventListener("mouseleave", () => document.querySelectorAll(".block.lit").forEach((x) => x.classList.remove("lit")));
+    box.append(card);
+  }
+}
+
+function toggle(id) {
+  pulled.has(id) ? pulled.delete(id) : pulled.add(id);
+  update();
+}
+
+function update() {
+  for (const btn of document.querySelectorAll(".block")) btn.setAttribute("aria-pressed", pulled.has(btn.dataset.id) ? "true" : "false");
+  let standing = 0;
+  for (const id of order) {
+    const p = byProof[id];
+    const card = document.getElementById("proof-" + id);
+    const status = card.querySelector("[data-status]");
+    const hit = p.blocks.filter((b) => pulled.has(b));
+    card.classList.toggle("fallen", hit.length > 0);
+    status.replaceChildren();
+    if (!hit.length) {
+      standing++;
+      status.append(el("span", { class: "ok", text: pulled.size ? "Still standing." : "Standing." }));
+      continue;
+    }
+    const first = hit[0];
+    status.append(`Fell: it uses ${blockName(first)}${hit.length > 1 ? ` (and ${hit.length - 1} more pulled)` : ""}.`);
+    const chain = p.why[first] || [];
+    const list = el("ol", { class: "chain" }, ...chain.map((n) => el("li", { text: tidy(n) })));
+    status.append(el("details", {}, el("summary", { text: `Why? ${chain.length - 1} step${chain.length === 2 ? "" : "s"} down` }), list));
+  }
+  const score = `${standing} of ${order.length} standing`;
+  document.getElementById("score").textContent = score;
+  document.querySelector("[data-dock-score]").textContent = score;
+  const fallen = order.filter((id) => document.getElementById("proof-" + id).classList.contains("fallen")).map((id) => PROOFS[id].name);
+  document.querySelector("[data-dock-fallen]").textContent = fallen.length ? "Fell: " + fallen.join(", ") : (pulled.size ? "Nothing fell." : "Tap a block to pull it.");
+}
+
+function renderFindings() {
+  const ol = document.getElementById("findings");
+  const size = (id) => byProof[id].closureSize;
+  const euclidUsers = users("Nat.exists_infinite_primes").filter((p) => p !== "Jenga.euclid").map((p) => PROOFS[p].name);
+  const chainLen = (p, b) => (byProof[p].why[b] || []).length - 1;
+  const items = [
+    ["Two proofs secretly rely on the theorem they prove.",
+      `In Mathlib, ${euclidUsers.join(" and ")} both reach Euclid's theorem. The route is ${chainLen("Jenga.erdos", "Nat.exists_infinite_primes")} lemmas deep, through a fact about smooth numbers stated as an “if and only if”. One direction of it needs infinitely many primes. The divergence proof only ever uses the other direction, and a separate check confirms this lemma is their only route to Euclid.`],
+    ["So we pulled the block and rebuilt.",
+      `“Erdős, rebuilt” replays Mathlib's proof with that one step replaced by a one-directional lemma. Lean confirms the new proof stands on ${fmt(size("Jenga.erdosRebuilt"))} declarations and none of them is Euclid's theorem. It no longer needs factorials either. This is the move from Tao's talk: remove a tool and find another route.`],
+    ["One idea holds up every proof.",
+      `Pull “Prime factors exist” and all ${order.length} fall. Every route to infinitely many primes here starts from the fact that a number bigger than 1 has a prime factor.`],
+    ["The proofs differ in size by a factor of " + Math.round(size("Jenga.dirichlet") / size("Jenga.euclid")) + ".",
+      `Euclid stands on ${fmt(size("Jenga.euclid"))} definitions and lemmas, Goldbach's Fermat-number proof on ${fmt(size("Jenga.fermat"))}, Dirichlet on ${fmt(size("Jenga.dirichlet"))}. Goldbach's proof and the rebuilt Erdős are the only ones here that never touch factorials. Bertrand and Dirichlet use them without saying so: e<sup>x</sup> is defined by a series with n! in it.`],
+    ["Even Euclid uses the axiom of choice, as written.",
+      `Euclid's argument is constructive: it tells you how to find the next prime. But all ${users("Classical.choice").length} proofs reach the axiom of choice through some library lemma that reasons by cases. That's another gap between “uses” and “needs”.`],
+  ];
+  for (const [head, body] of items) {
+    const p = el("p");
+    p.innerHTML = body;
+    ol.append(el("li", {}, el("b", { text: head }), p));
+  }
+}
+
+renderTower();
+renderProofs();
+renderFindings();
+update();
+</script>
+
+</body>
+</html>
